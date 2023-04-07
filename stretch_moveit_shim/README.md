@@ -27,15 +27,21 @@ import rospy
 from stretch_moveit_shim.srv import SetJoints, SetJointsRequest, SetBodyResponse
 from stretch_moveit_shim.msg import Joint
 
-rospy.wait_for_service('/stretch_interface/set_joints')
+rospy.wait_for_service('/stretch_interface/set_joints') # check to make sure service client is available
 
 try:
-    service = rospy.ServiceProxy('/stretch_interface/set_joints', SetJoints)
-    msg = Joint(joint_name='gripper_aperture', val = 0.01)
-    service([msg])
+    service = rospy.ServiceProxy('/stretch_interface/set_joints', SetJoints) # setup a service client
+    msg = Joint(joint_name='gripper_aperture', val = 0.01) # create a joint with a name and value
+    service([msg]) # pass an array of joints. This code will block
 except rospy.ServiceException as e:
     print("Service call failed: %s"%e)
 ```
+This code uses services to block till code it executed. Please check out ros documentation on how to write a service client for ros in cpp and python
+
+[Create a service and client in Python](http://wiki.ros.org/ROS/Tutorials/WritingServiceClient%28python%29)
+[Create a service and client in CPP](http://wiki.ros.org/ROS/Tutorials/WritingServiceClient%28c%2B%2B%29)
+
+
 Available joints are
 - joint_head_pan
 - joint_head_tilt
