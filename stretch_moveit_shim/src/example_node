@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+
+import sys
+import rospy
+from stretch_moveit_shim.srv import SetJoints, SetJointsRequest, SetBodyResponse
+from stretch_moveit_shim.msg import Joint
+
+rospy.wait_for_service('/stretch_interface/set_joints')
+
+try:
+    service = rospy.ServiceProxy('/stretch_interface/set_joints', SetJoints)
+    msg = Joint(joint_name='gripper_aperture', val = 0.01)
+    service([msg])
+except rospy.ServiceException as e:
+    print("Service call failed: %s"%e)

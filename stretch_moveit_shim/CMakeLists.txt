@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(stretch_ros_shim)
+project(stretch_moveit_shim)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -47,17 +47,17 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  Joint.msg
+)
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
   GetBody.srv
   SetBody.srv
+  SetJoints.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -160,7 +160,9 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-  src/stretch_interface
+  src/stretch_interface_real
+  src/stretch_interface_gazebo
+  src/example_node
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

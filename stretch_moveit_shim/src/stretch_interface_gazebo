@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+
+# req ros-noetic-moveit-commander
+from math import pi
+from rosgraph import ROS_HOSTNAME
+import rospy
+import sys
+import moveit_commander
+import moveit_msgs.msg
+import geometry_msgs.msg
+from moveit_commander.conversions import pose_to_list
+from stretch_moveit_shim.msg import Joint
+from stretch_moveit_shim.srv import SetBody, SetBodyRequest, SetBodyResponse, GetBody,  GetBodyRequest, GetBodyResponse, SetJoints, SetJointsRequest, SetJointsResponse
+
+head_list = ['joint_head_pan', 'joint_head_tilt']
+arm_list = ['joint_lift', 'wrist_extension', 'joint_wrist_yaw']
+dex_list = ['joint_wrist_roll', 'joint_wrist_pitch']
+gripper_list = ['gripper_aperture']
+class stretch_interface_gazebo(object):
+    def __init__(self):
+        rospy.init_node("stretch_interface", anonymous=True)
+        self.rate = 10.0
+        self.robot = moveit_commander.RobotCommander()
+        self.group_head = "stretch_head"
+        self.group_arm = "stretch_arm"
+        self.group_dex_wrist = "stretch_dex_wrist"
+        self.group_gripper = "stretch_gripper"
+        self.move_group_head = moveit_commander.MoveGroupCommander(self.group_head)
+        self.move_group_arm = moveit_commander.MoveGroupCommander(self.group_arm)
+        self.move_group_dex_wrist = moveit_commander.MoveGroupCommander(self.group_dex_wrist)
+        self.move_group_gripper = moveit_commander.MoveGroupCommander(self.group_gripper)
+        # planning_frame_arm = self.move_group_arm.get_planning_frame()
+        # print("============ Available Planning Groups:", self.robot.get_group_names())
+
+    def set_joints(self, req: SetJointsRequest):
+        dict_head = {}
+        dict_arm = {}
+        dict_dex_wrist = {}
+        dict_gripper = {}
+        for t in req.joints:
+            if t.joint_name in head_list:
+                dict_head[t.joint_name] = t.val
+            elif t.joint_name in arm_list:
+                dict_arm[t.joint_name] = t.val
+            elif t.joint_name in dex_list:
+                dict_dex_wrist[t.joint_name] = t.val
+            elif t.joint_name in gripper_list:
+                dict_gripper[t.joint_name] = t.val
+        if dict_head:
+            joint_goal = self.move_group_head.get_current_joint_values()
+            if 'joint_head_pan' in dict_head:
+                joint_goal[0] = dict_head['joint_head_pan']
+            if 'joint_head_tilt' in dict_head:
+                joint_goal[1] = dict_head['joint_head_tilt']
+            self.move_group_head.go(joint_goal, wait=True)
+            self.move_group_head.stop()
+        if dict_arm:
+            joint_goal = self.move_group_arm.get_current_joint_values()
+            if 'joint_lift' in dict_arm:
+                joint_goal[0] = dict_arm['joint_lift']
+            if 'wrist_extension' in dict_arm:
+                joint_goal[1] = dict_arm['wrist_extension']/4
+                joint_goal[2] = dict_arm['wrist_extension']/4
+                joint_goal[3] = dict_arm['wrist_extension']/4
+                joint_goal[4] = dict_arm['wrist_extension']/4
+            if 'joint_wrist_yaw' in dict_arm:
+                joint_goal[5] = dict_arm['joint_wrist_yaw']
+            self.move_group_arm.go(joint_goal, wait=True)
+            self.move_group_arm.stop()
+        if dict_dex_wrist:
+            joint_goal = self.move_group_dex_wrist.get_current_joint_values()
+            if 'joint_wrist_roll' in dict_dex_wrist:
+                joint_goal[1] = dict_dex_wrist['joint_wrist_roll']
+            if 'joint_wrist_pitch' in dict_dex_wrist:
+                joint_goal[0] = dict_dex_wrist['joint_wrist_pitch']
+            self.move_group_dex_wrist.go(joint_goal, wait=True)
+            self.move_group_dex_wrist.stop()
+        if dict_gripper:
+            joint_goal = self.move_group_gripper.get_current_joint_values()
+            joint_goal[0] = dict_gripper['gripper_aperture']/2
+            joint_goal[1] = dict_gripper['gripper_aperture']/2
+            self.move_group_gripper.go(joint_goal, wait=True)
+            self.move_group_gripper.stop()
+
+        return SetJointsResponse()
+                    
+    def main(self):
+        self.set_pose_service = rospy.Service('/stretch_interface/set_joints', SetJoints, self.set_joints)
+        rate = rospy.Rate(self.rate)
+        while not rospy.is_shutdown() and KeyboardInterrupt:
+            rate.sleep()
+
+
+def main(args):
+    node = stretch_interface_gazebo()
+    node.main()
+
+if __name__ == '__main__':
+    main(sys.argv)

@@ -8,7 +8,8 @@ import hello_helpers.hello_misc as hm
 from std_msgs.msg import Float64, Bool
 from std_srvs.srv import Trigger
 from sensor_msgs.msg import JointState
-from stretch_ros_shim.srv import SetBody, SetBodyRequest, SetBodyResponse, GetBody,  GetBodyRequest, GetBodyResponse
+from stretch_moveit_shim.msg import Joint
+from stretch_moveit_shim.srv import SetBody, SetBodyRequest, SetBodyResponse, GetBody,  GetBodyRequest, GetBodyResponse, SetJoints, SetJointsRequest, SetJointsResponse
 
 class stretch_interface(hm.HelloNode):
     def __init__(self):
@@ -47,6 +48,12 @@ class stretch_interface(hm.HelloNode):
         self.joint_states = pose
         self.move_to_pose(pose)
         return SetBodyResponse()
+    def set_joints(self, req: SetJointsRequest):
+        pose = {}
+        for key, val in req.joints:
+            pose[key] = val
+            self.joint_states[key] = val
+        self.move_to_pose(pose)
     def stow_robot(self):
         pose = {        'joint_head_pan': 0,
                         'joint_head_tilt': 0,

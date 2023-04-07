@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>stretch_ros_shim</name>
+  <name>stretch_moveit_shim</name>
   <version>0.0.0</version>
-  <description>The stretch_ros_shim package</description>
+  <description>The stretch_moveit_shim package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
