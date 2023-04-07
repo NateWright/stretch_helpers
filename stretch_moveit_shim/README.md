@@ -1,6 +1,15 @@
 # stretch_moveit_shim
 Moveit support is very limited with stretch and is not supported on the real robot. In order to overcome this I have made a package that acts as a shim or interface that can be communicated with to make your code independent of the platform. One node is for moving the real robot and the other node is for gazebo. 
 
+# Installation
+```bash
+cd ~/catkin_ws/src
+git clone https://github.com/NateWright/stretch_helpers.git
+sudo apt install ros-noetic-moveit-commander
+cd ..
+catkin build
+source devel/setup.bash
+```
 # Launching
 ```bash
 # Gazebo
