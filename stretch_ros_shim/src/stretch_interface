@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+from math import pi
+from rosgraph import ROS_HOSTNAME
+import rospy
+import sys
+import threading
+import hello_helpers.hello_misc as hm
+from std_msgs.msg import Float64, Bool
+from std_srvs.srv import Trigger
+from sensor_msgs.msg import JointState
+from stretch_ros_shim.srv import SetBody, SetBodyRequest, SetBodyResponse, GetBody,  GetBodyRequest, GetBodyResponse
+
+class stretch_interface(hm.HelloNode):
+    def __init__(self):
+        hm.HelloNode.__init__(self)
+        self.rate = 10.0
+        self.joint_states = None
+        self.joint_states_lock = threading.Lock()
+        self.letter_height_m = 0.2
+
+    # def callback_set_head_tilt(self, data):
+    #     self.move_lock.acquire()
+    #     initial_pose = {'joint_head_tilt': data.data}
+    #     self.move_to_pose(initial_pose)
+    #     self.move_lock.release()
+    #     return DoubleBoolResponse(True)
+    def get_pose(self, req):
+        pose = GetBodyResponse()
+        pose.joint_head_pan = self.joint_states['joint_head_pan']
+        pose.joint_head_tilt = self.joint_states['joint_head_tilt']
+        pose.joint_lift = self.joint_states['joint_lift']
+        pose.wrist_extension = self.joint_states['wrist_extension']
+        pose.joint_wrist_roll = self.joint_states['joint_wrist_roll']
+        pose.joint_wrist_pitch = self.joint_states['joint_wrist_pitch']
+        pose.joint_wrist_yaw = self.joint_states['joint_wrist_yaw']
+        pose.gripper_aperture = self.joint_states['gripper_aperture']
+        return pose
+    def set_pose(self, req: SetBodyRequest):
+        pose = {        'joint_head_pan': req.joint_head_pan,
+                        'joint_head_tilt': req.joint_head_tilt,
+                        'joint_lift': req.joint_lift,
+                        'wrist_extension': req.wrist_extension,
+                        'joint_wrist_roll': req.joint_wrist_roll,
+                        'joint_wrist_pitch': req.joint_wrist_pitch,
+                        'joint_wrist_yaw': req.joint_wrist_yaw,
+                        'gripper_aperture': req.gripper_aperture}
+        self.joint_states = pose
+        self.move_to_pose(pose)
+        return SetBodyResponse()
+    def stow_robot(self):
+        pose = {        'joint_head_pan': 0,
+                        'joint_head_tilt': 0,
+                        'joint_lift': 0.2,
+                        'wrist_extension': 0,
+                        'joint_wrist_roll': 0,
+                        'joint_wrist_pitch': 0,
+                        'joint_wrist_yaw': pi,
+                        'gripper_aperture': 0}
+        self.joint_states = pose
+        self.move_to_pose(pose)
+
+
+    def main(self):
+        hm.HelloNode.main(self, 'stretch_interface', 'stretch_interface', wait_for_first_pointcloud=False)
+        self.set_pose_service = rospy.Service('/stretch_interface/set_pose', SetBody, self.set_pose)
+        self.get_pose_service = rospy.Service('/stretch_interface/get_pose', GetBody, self.get_pose)
+
+        msg = rospy.wait_for_message("/is_calibrated", Bool)
+        if(msg.data == False):
+            home = rospy.ServiceProxy("/calibrate_the_robot", Trigger)
+            home()
+        self.stow_robot()
+        navigation = rospy.ServiceProxy("/switch_to_navigation_mode", Trigger)
+        navigation()
+
+        rate = rospy.Rate(self.rate)
+        while not rospy.is_shutdown() and KeyboardInterrupt:
+            rate.sleep()
+
+def main(args):
+    node = stretch_interface()
+    node.main()
+
+if __name__ == '__main__':
+    main(sys.argv)

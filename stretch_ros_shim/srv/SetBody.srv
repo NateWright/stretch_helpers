@@ -1,0 +1,9 @@
+float32 joint_head_pan
+float32 joint_head_tilt
+float32 joint_lift
+float32 wrist_extension
+float32 joint_wrist_roll
+float32 joint_wrist_pitch
+float32 joint_wrist_yaw
+float32 gripper_aperture
+---
