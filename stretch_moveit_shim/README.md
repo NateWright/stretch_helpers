@@ -36,10 +36,10 @@ try:
 except rospy.ServiceException as e:
     print("Service call failed: %s"%e)
 ```
-This code uses services to block till code it executed. Please check out ros documentation on how to write a service client for ros in cpp and python
+This code uses services to block till code it executed. Please check out ros documentation on how to write a service client for ros in cpp and python.
 
-[Create a service and client in Python](http://wiki.ros.org/ROS/Tutorials/WritingServiceClient%28python%29)
-[Create a service and client in CPP](http://wiki.ros.org/ROS/Tutorials/WritingServiceClient%28c%2B%2B%29)
+- [Create a service and client in Python](http://wiki.ros.org/ROS/Tutorials/WritingServiceClient%28python%29)
+- [Create a service and client in CPP](http://wiki.ros.org/ROS/Tutorials/WritingServiceClient%28c%2B%2B%29)
 
 
 Available joints are
