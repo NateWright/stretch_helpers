@@ -59,8 +59,7 @@ class stretch_interface(hm.HelloNode):
 
     def main(self):
         hm.HelloNode.main(self, 'stretch_interface', 'stretch_interface', wait_for_first_pointcloud=False)
-        self.set_pose_service = rospy.Service('/stretch_interface/set_joints', SetJoints, self.set_joints)
-        self.get_pose_service = rospy.Service('/stretch_interface/get_joints', GetBody, self.get_pose)
+
 
         msg = rospy.wait_for_message("/is_calibrated", Bool)
         if(msg.data == False):
@@ -69,6 +68,9 @@ class stretch_interface(hm.HelloNode):
         self.stow_robot()
         navigation = rospy.ServiceProxy("/switch_to_navigation_mode", Trigger)
         navigation()
+
+        self.set_pose_service = rospy.Service('/stretch_interface/set_joints', SetJoints, self.set_joints)
+        self.get_pose_service = rospy.Service('/stretch_interface/get_joints', GetBody, self.get_pose)
 
         rate = rospy.Rate(self.rate)
         while not rospy.is_shutdown() and KeyboardInterrupt:
