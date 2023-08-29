@@ -83,7 +83,7 @@ class stretch_interface(hm.HelloNode):
         self.get_pose_service = rospy.Service(
             '/stretch_interface/get_joints', GetBody, self.get_pose)
         
-        self.set_joints_sub = rospy.Service('/stretch_interface/set_joints', Joints, self.set_joints_callback)
+        self.set_joints_sub = rospy.Subscriber('/stretch_interface/set_joints', Joints, self.set_joints_callback)
 
         rate = rospy.Rate(self.rate)
         while not rospy.is_shutdown() and KeyboardInterrupt:
