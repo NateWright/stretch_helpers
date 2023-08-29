@@ -8,7 +8,7 @@ import hello_helpers.hello_misc as hm
 from std_msgs.msg import Float64, Bool
 from std_srvs.srv import Trigger
 from sensor_msgs.msg import JointState
-from stretch_moveit_shim.msg import Joint
+from stretch_moveit_shim.msg import Joint, Joints
 from stretch_moveit_shim.srv import SetBody, SetBodyRequest, SetBodyResponse, GetBody,  GetBodyRequest, GetBodyResponse, SetJoints, SetJointsRequest, SetJointsResponse
 
 
@@ -45,6 +45,14 @@ class stretch_interface(hm.HelloNode):
             self.joint_states[msg.joint_name] = msg.val
         self.move_to_pose(pose)
         return SetJointsResponse()
+    
+    def set_joints_callback(self, msg: Joints):
+        pose = {}
+        for msg in msg.joints:
+            pose[msg.joint_name] = msg.val
+            self.joint_states[msg.joint_name] = msg.val
+        self.move_to_pose(pose, return_before_done=True)
+        return
 
     def stow_robot(self):
         pose = {'joint_head_pan': 0,
@@ -74,6 +82,8 @@ class stretch_interface(hm.HelloNode):
             '/stretch_interface/set_joints', SetJoints, self.set_joints)
         self.get_pose_service = rospy.Service(
             '/stretch_interface/get_joints', GetBody, self.get_pose)
+        
+        self.set_joints_sub = rospy.Service('/stretch_interface/set_joints', Joints, self.set_joints_callback)
 
         rate = rospy.Rate(self.rate)
         while not rospy.is_shutdown() and KeyboardInterrupt:
