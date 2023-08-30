@@ -12,20 +12,33 @@ from stretch_moveit_shim.msg import Joint, Joints
 from stretch_moveit_shim.srv import SetBody, SetBodyRequest, SetBodyResponse, GetBody,  GetBodyRequest, GetBodyResponse, SetJoints, SetJointsRequest, SetJointsResponse
 
 
-class stretch_interface(hm.HelloNode):
+class StretchInterface(hm.HelloNode):
     def __init__(self):
         hm.HelloNode.__init__(self)
-        self.rate = 10.0
         self.joint_states = None
         self.joint_states_lock = threading.Lock()
         self.letter_height_m = 0.2
+        hm.HelloNode.main(self, 'stretch_interface',
+                          'stretch_interface', wait_for_first_pointcloud=False)
 
-    # def callback_set_head_tilt(self, data):
-    #     self.move_lock.acquire()
-    #     initial_pose = {'joint_head_tilt': data.data}
-    #     self.move_to_pose(initial_pose)
-    #     self.move_lock.release()
-    #     return DoubleBoolResponse(True)
+        # Check if robot is calibrated
+        msg = rospy.wait_for_message("/is_calibrated", Bool)
+        if (msg.data == False):
+            home = rospy.ServiceProxy("/calibrate_the_robot", Trigger)
+            home()
+        # Stow robot
+        self.stow_robot()
+        # Switch robot to navigation mode
+        navigation = rospy.ServiceProxy("/switch_to_navigation_mode", Trigger)
+        navigation()
+
+        self.set_pose_service = rospy.Service(
+            '/stretch_interface/set_joints', SetJoints, self.set_joints)
+        self.get_pose_service = rospy.Service(
+            '/stretch_interface/get_joints', GetBody, self.get_pose)
+        
+        self.set_joints_sub = rospy.Subscriber('/stretch_interface/set_joints', Joints, self.set_joints_callback)
+
     def get_pose(self, req):
         pose = GetBodyResponse()
         pose.joint_head_pan = self.joint_states['joint_head_pan']
@@ -66,34 +79,10 @@ class stretch_interface(hm.HelloNode):
         self.joint_states = pose
         self.move_to_pose(pose)
 
-    def main(self):
-        hm.HelloNode.main(self, 'stretch_interface',
-                          'stretch_interface', wait_for_first_pointcloud=False)
-
-        msg = rospy.wait_for_message("/is_calibrated", Bool)
-        if (msg.data == False):
-            home = rospy.ServiceProxy("/calibrate_the_robot", Trigger)
-            home()
-        self.stow_robot()
-        navigation = rospy.ServiceProxy("/switch_to_navigation_mode", Trigger)
-        navigation()
-
-        self.set_pose_service = rospy.Service(
-            '/stretch_interface/set_joints', SetJoints, self.set_joints)
-        self.get_pose_service = rospy.Service(
-            '/stretch_interface/get_joints', GetBody, self.get_pose)
-        
-        self.set_joints_sub = rospy.Subscriber('/stretch_interface/set_joints', Joints, self.set_joints_callback)
-
-        rate = rospy.Rate(self.rate)
-        while not rospy.is_shutdown() and KeyboardInterrupt:
-            rate.sleep()
-
-
-def main(args):
-    node = stretch_interface()
-    node.main()
-
 
 if __name__ == '__main__':
-    main(sys.argv)
+    rospy.init_node('stretch_interface', log_level=rospy.DEBUG)
+    node = StretchInterface()
+    rospy.sleep(1)
+    rospy.loginfo('Ready')
+    rospy.spin()
